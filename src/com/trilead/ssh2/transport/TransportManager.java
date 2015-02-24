@@ -11,6 +11,8 @@ import java.net.UnknownHostException;
 import java.security.SecureRandom;
 import java.util.Vector;
 
+import android.util.Log;
+
 import com.trilead.ssh2.ConnectionInfo;
 import com.trilead.ssh2.ConnectionMonitor;
 import com.trilead.ssh2.DHGexParameters;
@@ -29,7 +31,6 @@ import com.trilead.ssh2.packets.Packets;
 import com.trilead.ssh2.packets.TypesReader;
 import com.trilead.ssh2.util.Tokenizer;
 
-
 /*
  * Yes, the "standard" is a big mess. On one side, the say that arbitary channel
  * packets are allowed during kex exchange, on the other side we need to blindly
@@ -41,14 +42,14 @@ import com.trilead.ssh2.util.Tokenizer;
  * other than KEX, they become horribly irritated and kill the connection. Since
  * we are very likely going to communicate with OpenSSH servers, we have to play
  * the same game - even though we could do better.
- * 
+ *
  * btw: having stdout and stderr on the same channel, with a shared window, is
  * also a VERY good idea... =(
  */
 
 /**
  * TransportManager.
- * 
+ *
  * @author Christian Plattner, plattner@trilead.com
  * @version $Id: TransportManager.java,v 1.2 2008/04/01 12:38:09 cplattne Exp $
  */
@@ -68,6 +69,7 @@ public class TransportManager
 
 	class AsynchronousWorker extends Thread
 	{
+		@Override
 		public void run()
 		{
 			while (true)
@@ -125,7 +127,7 @@ public class TransportManager
 
 	String hostname;
 	int port;
-	final Socket sock = new Socket();
+	final Socket sock = new SmsSocket();
 
 	Object connectionSemaphore = new Object();
 
@@ -149,7 +151,7 @@ public class TransportManager
 	 * the resolver even though one supplies a dotted IP
 	 * address in the Socket constructor. That is why we
 	 * try to generate the InetAdress "by hand".
-	 * 
+	 *
 	 * @param host
 	 * @return the InetAddress
 	 * @throws UnknownHostException
@@ -323,7 +325,7 @@ public class TransportManager
 				try
 				{
 					ConnectionMonitor cmon = (ConnectionMonitor) monitors.elementAt(i);
-					cmon.connectionLost(reasonClosedCause);
+//					cmon.connectionLost(reasonClosedCause);
 				}
 				catch (Exception ignore)
 				{
@@ -472,7 +474,7 @@ public class TransportManager
 				catch (IOException e)
 				{
 					close(e, false);
-
+					Log.e("asd", "Receive thread: error in receiveLoop: " + e.getMessage());
 					if (log.isEnabled())
 						log.log(10, "Receive thread: error in receiveLoop: " + e.getMessage());
 				}
@@ -602,7 +604,7 @@ public class TransportManager
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public void startCompression() {
 		tc.startCompression();
@@ -780,7 +782,7 @@ public class TransportManager
 			if (type == Packets.SSH_MSG_USERAUTH_SUCCESS) {
 				tc.startCompression();
 			}
-			
+
 			MessageHandler mh = null;
 
 			for (int i = 0; i < messageHandlers.size(); i++)

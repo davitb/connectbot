@@ -139,6 +139,7 @@ public class Relay implements Runnable {
 				}
 			}
 		} catch (IOException e) {
+			Log.e(TAG, e.getMessage());
 			Log.e(TAG, "Problem while handling incoming data in relay thread", e);
 		}
 	}
