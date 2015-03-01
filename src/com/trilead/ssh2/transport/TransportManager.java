@@ -127,7 +127,7 @@ public class TransportManager
 
 	String hostname;
 	int port;
-	final Socket sock = new SmsSocket();
+	Socket sock = new Socket();
 
 	Object connectionSemaphore = new Object();
 
@@ -145,6 +145,16 @@ public class TransportManager
 
 	Vector connectionMonitors = new Vector();
 	boolean monitorsWereInformed = false;
+
+	public void setSocketType(boolean smsTransport) throws IOException
+	{
+		if (smsTransport) {
+			sock = new SmsSocket();
+		}
+		else {
+			sock = new Socket();
+		}
+	}
 
 	/**
 	 * There were reports that there are JDKs which use

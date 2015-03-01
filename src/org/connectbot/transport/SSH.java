@@ -103,6 +103,7 @@ public class SSH extends AbsTransport implements ConnectionMonitor, InteractiveC
 		hostmask = Pattern.compile("^(.+)@([0-9a-z.-]+)(:(\\d+))?$", Pattern.CASE_INSENSITIVE);
 	}
 
+	private boolean smsTransport = false;
 	private boolean compression = false;
 	private volatile boolean authenticated = false;
 	private volatile boolean connected = false;
@@ -411,6 +412,7 @@ public class SSH extends AbsTransport implements ConnectionMonitor, InteractiveC
 		connection.addConnectionMonitor(this);
 
 		try {
+			connection.setSMSTransport(smsTransport);
 			connection.setCompression(compression);
 		} catch (IOException e) {
 			Log.e(TAG, "Could not enable compression!", e);
@@ -845,6 +847,11 @@ public class SSH extends AbsTransport implements ConnectionMonitor, InteractiveC
 	@Override
 	public void setCompression(boolean compression) {
 		this.compression = compression;
+	}
+
+	@Override
+	public void setSMSTransport(boolean sms) {
+		this.smsTransport = sms;
 	}
 
 	public static String getFormatHint(Context context) {

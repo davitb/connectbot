@@ -132,6 +132,10 @@ public abstract class AbsTransport {
 		// do nothing
 	}
 
+	public void setSMSTransport(boolean sms) {
+		// do nothing
+	}
+
 	public void setUseAuthAgent(String useAuthAgent) {
 		// do nothing
 	}

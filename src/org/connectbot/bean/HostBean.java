@@ -50,6 +50,7 @@ public class HostBean extends AbstractBean {
 	private boolean compression = false;
 	private String encoding = HostDatabase.ENCODING_DEFAULT;
 	private boolean stayConnected = false;
+	private boolean sms = false;
 
 	public HostBean() {
 
@@ -186,6 +187,13 @@ public class HostBean extends AbstractBean {
 		return compression;
 	}
 
+	public void setSMSTransport(boolean sms) {
+		this.sms = sms;
+	}
+	public boolean getSMSTransport() {
+		return sms;
+	}
+
 	public void setEncoding(String encoding) {
 		this.encoding  = encoding;
 	}
@@ -216,6 +224,7 @@ public class HostBean extends AbstractBean {
 		ContentValues values = new ContentValues();
 
 		values.put(HostDatabase.FIELD_HOST_NICKNAME, nickname);
+		values.put(HostDatabase.FIELD_HOST_SMSTRANSPORT, Boolean.toString(sms));
 		values.put(HostDatabase.FIELD_HOST_PROTOCOL, protocol);
 		values.put(HostDatabase.FIELD_HOST_USERNAME, username);
 		values.put(HostDatabase.FIELD_HOST_HOSTNAME, hostname);

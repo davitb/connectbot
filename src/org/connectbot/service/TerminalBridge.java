@@ -262,6 +262,7 @@ public class TerminalBridge implements VDUDisplay {
 		transport.setHost(host);
 
 		// TODO make this more abstract so we don't litter on AbsTransport
+		transport.setSMSTransport(host.getSMSTransport());
 		transport.setCompression(host.getCompression());
 		transport.setUseAuthAgent(host.getUseAuthAgent());
 		transport.setEmulation(emulation);

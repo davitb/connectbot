@@ -6,20 +6,14 @@ package com.trilead.ssh2.transport;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.io.Reader;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
 import java.net.Socket;
 import java.net.SocketAddress;
-import java.net.URL;
+import java.util.ArrayList;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
+import android.telephony.SmsManager;
 import android.util.Log;
 
 /**
@@ -32,6 +26,7 @@ public class SmsSocket extends Socket {
 
 	SmsOutputStream _outs = new SmsOutputStream();
 	SmsInputStream _ins = new SmsInputStream();
+
 
 	public class SmsInputStream extends InputStream {
 
@@ -67,7 +62,8 @@ public class SmsSocket extends Socket {
 		{
 			Log.e(DEBUG_TAG, "expected read bytes size: " + String.valueOf(count));
 			int num = _pipeReader.read(buffer, offset, count);
-			if (count - num > 100) {
+//			if (count - num > 100)
+			{
 				try {
 					// Give a break to the reader
 					Thread.sleep(10);
@@ -116,10 +112,11 @@ public class SmsSocket extends Socket {
 		}
 	}
 
+	public static PipedOutputStream _pipeWriter = new PipedOutputStream();
+
 	public class SmsOutputStream extends OutputStream {
 
 		ByteArrayOutputStream _stream = new ByteArrayOutputStream();
-		public PipedOutputStream _pipeWriter = new PipedOutputStream();
 
 		@Override
 		public void write(byte[] buffer) throws IOException
@@ -156,13 +153,14 @@ public class SmsSocket extends Socket {
 			}
 			Log.e(DEBUG_TAG, "flush, count: " + data.length);
 
-			sendHTTPMessage("s", data);
+			sendDataToTwilio("s", data);
 			_stream = new ByteArrayOutputStream();
 		}
 	}
 
 	public SmsSocket() throws IOException {
-		_ins._pipeReader.connect(_outs._pipeWriter);
+		_pipeWriter = new PipedOutputStream();
+		_ins._pipeReader.connect(_pipeWriter);
 	}
 
 	/*
@@ -196,95 +194,96 @@ public class SmsSocket extends Socket {
     }
 
     @Override
-    public synchronized void close()
+    public synchronized void close() throws IOException
     {
-    	bTerminateThread = true;
+		_pipeWriter.flush();
+    	sendSMS("l0100");
     }
 
-    private boolean bTerminateThread = false;
-
     @Override
-    public void connect(SocketAddress remoteAddr, int timeout)
+    public void connect(SocketAddress remoteAddr, int timeout) throws IOException
     {
     	Log.e(DEBUG_TAG, "RemoteAddr: " + remoteAddr.toString());
 
-    	//SmsManager.getDefault().sendTextMessage("+14084390019", null, "utyu", null, null);
-
-		new Thread(new Runnable() {
-	        public void run() {
-	        	try {
-	        		while (!bTerminateThread) {
-		        		Thread.sleep(500);
-
-		        		Log.e(DEBUG_TAG, "Reading thread: preparing to send HTTP");
-						byte[] response = sendHTTPMessage("r", new byte[0]);
-						if (response.length > 0) {
-							_outs._pipeWriter.write(response, 0, response.length);
-						}
-	        		}
-	        	}
-	        	catch (Exception e) {
-	        		Log.e(DEBUG_TAG, e.getMessage());
-	        	}
-	        }
-	    }).start();
-
+    	_pipeWriter.flush();
+    	sendSMS("n0100");
     }
 
-    private String prepareJSONMessage(String op, String msg) throws IOException
+    private ArrayList<String> encodeForSmsProtocol(byte[] buffer) throws IOException
     {
-		try {
-			JSONObject js = new JSONObject();
-			js.put("op", op);
-			if (op.equals("s")) {
-				js.put("msg", msg);
-			}
-			return js.toString();
-		}
-		catch (JSONException e) {
-			throw new IOException("Cannot create JSON");
-		}
+    	//Log.e(DEBUG_TAG, bytesToHex(buffer));
+
+    	int chunkSize = 77;
+    	byte[][] chunks = divideArray(buffer, chunkSize);
+
+    	ArrayList<String> strs = new ArrayList<String>();
+    	for (int i = 0; i < chunks.length; ++i) {
+        	StringBuilder b = new StringBuilder();
+
+        	b.append("s");
+        	b.append(Integer.toHexString(0x100 | chunks.length).substring(1));
+        	b.append(Integer.toHexString(0x100 | i).substring(1));
+        	b.append(bytesToHex(chunks[i]));
+
+        	strs.add(b.toString());
+    	}
+
+    	return strs;
     }
 
-    private byte[] extractResponseFromJSON(String jsonMsg) throws IOException
+    public static void sendSMS(ArrayList<String> chunks)
     {
-		try {
-			byte[] response = new byte[0];
-			JSONObject js = new JSONObject(jsonMsg);
-			jsonMsg = js.getString("op");
-			if (jsonMsg.equals("r")) {
-				jsonMsg = js.getString("msg");
-				if (jsonMsg.length() > 0) {
-					//response = Base64.decode(resp, Base64.NO_WRAP | Base64.URL_SAFE);
-					response = hexStringToByteArray(jsonMsg);
-				}
-			}
-			Log.e(DEBUG_TAG, "received buffer size: " + response.length);
-			return response;
-		}
-		catch (JSONException e) {
-			throw new IOException("Cannot parse JSON");
-		}
+    	for (String val : chunks) {
+    		Log.e(DEBUG_TAG, "Sending through sms: " + val);
+    		sendSMS(val);
+    	}
+
+//    	SmsManager.getDefault().sendMultipartTextMessage("+16506238842",
+//    													 null,
+//    													 chunks,
+//    													 null,
+//    													 null);
     }
 
-    private synchronized byte[] sendHTTPMessage(String op, byte[] buffer) throws IOException
+    public static void sendSMS(String oneChunk)
+    {
+    	Log.e(DEBUG_TAG, oneChunk);
+    	SmsManager.getDefault().sendTextMessage("+16506238842",
+    													 null,
+    													 oneChunk,
+    													 null,
+    													 null);
+    }
+
+    private void sendDataToTwilio(String op, byte[] buffer) throws IOException
     {
     	Log.e(DEBUG_TAG, "sending buffer size: " + buffer.length);
 		//String msg = Base64.encodeToString(buffer, Base64.NO_WRAP | Base64.URL_SAFE);
-    	String msg = bytesToHex(buffer);
     	//Log.e(DEBUG_TAG, "sending buffer: " + bytesToHex(buffer));
 
-		msg = prepareJSONMessage(op, msg);
+		sendSMS(encodeForSmsProtocol(buffer));
+    }
 
-		String url = "http://481b2aa.ngrok.com/ssh?msg=" + msg;
+    public static byte[][] divideArray(byte[] source, int chunksize) {
 
-		Log.e(DEBUG_TAG, "HTTP request: " + url);
+        byte[][] ret = new byte[(int)Math.ceil(source.length / (double)chunksize)][chunksize];
+        int start = 0;
 
-		return extractResponseFromJSON(downloadUrl(url));
+        for(int i = 0; i < ret.length; i++) {
+            if(start + chunksize > source.length) {
+            	ret[i] = new byte[source.length - start];
+                System.arraycopy(source, start, ret[i], 0, source.length - start);
+            } else {
+                System.arraycopy(source, start, ret[i], 0, chunksize);
+            }
+            start += chunksize ;
+        }
+
+        return ret;
     }
 
     final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
-    private static String bytesToHex(byte[] bytes) {
+    public static String bytesToHex(byte[] bytes) {
         char[] hexChars = new char[bytes.length * 2];
         for ( int j = 0; j < bytes.length; j++ ) {
             int v = bytes[j] & 0xFF;
@@ -294,7 +293,7 @@ public class SmsSocket extends Socket {
         return new String(hexChars);
     }
 
-    private static byte[] hexStringToByteArray(String s) {
+    public static byte[] hexStringToByteArray(String s) {
         int len = s.length();
         byte[] data = new byte[len / 2];
         for (int i = 0; i < len; i += 2) {
@@ -304,71 +303,4 @@ public class SmsSocket extends Socket {
         return data;
     }
 
-	static int _num_times = 0;
-
-	// Given a URL, establishes an HttpUrlConnection and retrieves
-	// the web page content as a InputStream, which it returns as
-	// a string.
-	private String downloadUrl(String myurl) throws IOException {
-	     InputStream is = null;
-	     // Only display the first 500 characters of the retrieved
-	     // web page content.
-	     int len = 64 * 1024;
-
-	     try {
-	         URL url = new URL(myurl);
-	         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-	         conn.setReadTimeout(10000 /* milliseconds */);
-	         conn.setConnectTimeout(15000 /* milliseconds */);
-	         conn.setRequestMethod("GET");
-	         conn.setDoInput(true);
-	         // Starts the query
-	         conn.connect();
-	         int response = conn.getResponseCode();
-	         Log.d(DEBUG_TAG, "The response is: " + response);
-	         is = conn.getInputStream();
-
-	         // Convert the InputStream into a string
-	         String contentAsString = readIt(is, len);
-	         return contentAsString;
-
-	     // Makes sure that the InputStream is closed after the app is
-	     // finished using it.
-	     }
-	     catch (Exception e) {
-	    	 throw new IOException(e.getMessage());
-	     }
-	     finally {
-	         if (is != null) {
-	             is.close();
-	         }
-	     }
-	 }
-
-	 private static String readIt(final InputStream is, final int bufferSize)
-	 {
-	   final char[] buffer = new char[bufferSize];
-	   final StringBuilder out = new StringBuilder();
-	   try {
-	     final Reader in = new InputStreamReader(is, "UTF-8");
-	     try {
-	       for (;;) {
-	         int rsz = in.read(buffer, 0, buffer.length);
-	         if (rsz < 0)
-	           break;
-	         out.append(buffer, 0, rsz);
-	       }
-	     }
-	     finally {
-	       in.close();
-	     }
-	   }
-	   catch (UnsupportedEncodingException ex) {
-	     /* ... */
-	   }
-	   catch (IOException ex) {
-	       /* ... */
-	   }
-	   return out.toString();
-	}
 }

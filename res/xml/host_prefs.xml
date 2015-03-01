@@ -26,6 +26,12 @@
 		android:singleLine="true"
 		/>
 
+	<CheckBoxPreference
+		android:key="smstransport"
+		android:title="@string/sms_transport_title"
+		android:summary="@string/sms_transport_summary"
+		/>
+
 	<ListPreference
 		android:key="color"
 		android:title="@string/hostpref_color_title"

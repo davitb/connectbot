@@ -51,6 +51,7 @@ public class HostDatabase extends RobustSQLiteOpenHelper {
 
 	public final static String TABLE_HOSTS = "hosts";
 	public final static String FIELD_HOST_NICKNAME = "nickname";
+	public final static String FIELD_HOST_SMSTRANSPORT = "smstransport";
 	public final static String FIELD_HOST_PROTOCOL = "protocol";
 	public final static String FIELD_HOST_USERNAME = "username";
 	public final static String FIELD_HOST_HOSTNAME = "hostname";
@@ -152,6 +153,7 @@ public class HostDatabase extends RobustSQLiteOpenHelper {
 		db.execSQL("CREATE TABLE " + TABLE_HOSTS
 				+ " (_id INTEGER PRIMARY KEY, "
 				+ FIELD_HOST_NICKNAME + " TEXT, "
+				+ FIELD_HOST_SMSTRANSPORT + " TEXT DEFAULT '" + Boolean.toString(false) + "', "
 				+ FIELD_HOST_PROTOCOL + " TEXT DEFAULT 'ssh', "
 				+ FIELD_HOST_USERNAME + " TEXT, "
 				+ FIELD_HOST_HOSTNAME + " TEXT, "
@@ -361,6 +363,7 @@ public class HostDatabase extends RobustSQLiteOpenHelper {
 
 		final int COL_ID = c.getColumnIndexOrThrow("_id"),
 			COL_NICKNAME = c.getColumnIndexOrThrow(FIELD_HOST_NICKNAME),
+			COL_SMSTRANSPORT = c.getColumnIndexOrThrow(FIELD_HOST_SMSTRANSPORT),
 			COL_PROTOCOL = c.getColumnIndexOrThrow(FIELD_HOST_PROTOCOL),
 			COL_USERNAME = c.getColumnIndexOrThrow(FIELD_HOST_USERNAME),
 			COL_HOSTNAME = c.getColumnIndexOrThrow(FIELD_HOST_HOSTNAME),
@@ -384,6 +387,7 @@ public class HostDatabase extends RobustSQLiteOpenHelper {
 
 			host.setId(c.getLong(COL_ID));
 			host.setNickname(c.getString(COL_NICKNAME));
+			host.setSMSTransport(Boolean.valueOf(c.getString(COL_SMSTRANSPORT)));
 			host.setProtocol(c.getString(COL_PROTOCOL));
 			host.setUsername(c.getString(COL_USERNAME));
 			host.setHostname(c.getString(COL_HOSTNAME));
