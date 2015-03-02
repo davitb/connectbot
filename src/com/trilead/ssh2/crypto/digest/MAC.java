@@ -10,7 +10,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 /**
  * MAC.
- * 
+ *
  * @author Christian Plattner, plattner@trilead.com
  * @version $Id: MAC.java,v 1.1 2007/10/15 12:49:57 cplattne Exp $
  */
@@ -53,8 +53,12 @@ public final class MAC
 
 	/* Higher Priority First */
 	private static final String[] MAC_LIST = {
-		HMAC_SHA2_256, HMAC_SHA2_512,
-		HMAC_SHA1_96, HMAC_SHA1, HMAC_MD5_96, HMAC_MD5
+		 // HMAC_SHA2_256,
+		 // HMAC_SHA2_512,
+		 // HMAC_SHA1_96,
+		 // HMAC_SHA1,
+		 // HMAC_MD5_96,
+		 HMAC_MD5
 	};
 
 	public final static String[] getMacList()

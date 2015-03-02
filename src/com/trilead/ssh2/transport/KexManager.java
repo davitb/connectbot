@@ -39,7 +39,7 @@ import com.trilead.ssh2.signature.RSASHA1Verify;
 
 /**
  * KexManager.
- * 
+ *
  * @author Christian Plattner, plattner@trilead.com
  * @version $Id: KexManager.java,v 1.1 2007/10/15 12:49:56 cplattne Exp $
  */
@@ -49,22 +49,22 @@ public class KexManager
 
 	private static final Set<String> HOSTKEY_ALGS = new TreeSet<String>();
 	static {
-		HOSTKEY_ALGS.add("ecdsa-sha2-nistp256");
-		HOSTKEY_ALGS.add("ecdsa-sha2-nistp384");
-		HOSTKEY_ALGS.add("ecdsa-sha2-nistp521");
+		// HOSTKEY_ALGS.add("ecdsa-sha2-nistp256");
+		// HOSTKEY_ALGS.add("ecdsa-sha2-nistp384");
+		// HOSTKEY_ALGS.add("ecdsa-sha2-nistp521");
 		HOSTKEY_ALGS.add("ssh-rsa");
-		HOSTKEY_ALGS.add("ssh-dsa");
+		// HOSTKEY_ALGS.add("ssh-dsa");
 	}
 
 	private static final Set<String> KEX_ALGS = new TreeSet<String>();
 	static {
-		KEX_ALGS.add("ecdh-sha2-nistp256");
-		KEX_ALGS.add("ecdh-sha2-nistp384");
-		KEX_ALGS.add("ecdh-sha2-nistp521");
-		KEX_ALGS.add("diffie-hellman-group-exchange-sha256");
+		// KEX_ALGS.add("ecdh-sha2-nistp256");
+		// KEX_ALGS.add("ecdh-sha2-nistp384");
+		// KEX_ALGS.add("ecdh-sha2-nistp521");
+		// KEX_ALGS.add("diffie-hellman-group-exchange-sha256");
 		KEX_ALGS.add("diffie-hellman-group-exchange-sha1");
-		KEX_ALGS.add("diffie-hellman-group14-sha1");
-		KEX_ALGS.add("diffie-hellman-group1-sha1");
+		// KEX_ALGS.add("diffie-hellman-group14-sha1");
+		// KEX_ALGS.add("diffie-hellman-group1-sha1");
 	}
 
 	KexState kxs;
@@ -315,7 +315,7 @@ public class KexManager
 					km.initial_iv_client_to_server);
 
 			mac = new MAC(kxs.np.mac_algo_client_to_server, km.integrity_key_client_to_server);
-			
+
 			comp = CompressionFactory.createCompressor(kxs.np.comp_algo_client_to_server);
 
 		}
@@ -506,7 +506,7 @@ public class KexManager
 						km.enc_key_server_to_client, km.initial_iv_server_to_client);
 
 				mac = new MAC(kxs.np.mac_algo_server_to_client, km.integrity_key_server_to_client);
-				
+
 				comp = CompressionFactory.createCompressor(kxs.np.comp_algo_server_to_client);
 			}
 			catch (IllegalArgumentException e1)

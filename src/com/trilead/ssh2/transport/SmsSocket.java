@@ -12,8 +12,10 @@ import java.io.PipedOutputStream;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.ArrayList;
+import java.util.List;
 
 import android.telephony.SmsManager;
+import android.util.Base64;
 import android.util.Log;
 
 /**
@@ -213,17 +215,19 @@ public class SmsSocket extends Socket {
     {
     	//Log.e(DEBUG_TAG, bytesToHex(buffer));
 
-    	int chunkSize = 77;
-    	byte[][] chunks = divideArray(buffer, chunkSize);
+    	int chunkSize = 155;
+
+    	String b64EncodedMsg = Base64.encodeToString(buffer, Base64.NO_WRAP | Base64.URL_SAFE);
+    	List<String> chunks = splitEqually(b64EncodedMsg, chunkSize);
 
     	ArrayList<String> strs = new ArrayList<String>();
-    	for (int i = 0; i < chunks.length; ++i) {
+    	for (int i = 0; i < chunks.size(); ++i) {
         	StringBuilder b = new StringBuilder();
 
         	b.append("s");
-        	b.append(Integer.toHexString(0x100 | chunks.length).substring(1));
+        	b.append(Integer.toHexString(0x100 | chunks.size()).substring(1));
         	b.append(Integer.toHexString(0x100 | i).substring(1));
-        	b.append(bytesToHex(chunks[i]));
+        	b.append(chunks.get(i));
 
         	strs.add(b.toString());
     	}
@@ -234,7 +238,6 @@ public class SmsSocket extends Socket {
     public static void sendSMS(ArrayList<String> chunks)
     {
     	for (String val : chunks) {
-    		Log.e(DEBUG_TAG, "Sending through sms: " + val);
     		sendSMS(val);
     	}
 
@@ -247,7 +250,8 @@ public class SmsSocket extends Socket {
 
     public static void sendSMS(String oneChunk)
     {
-    	Log.e(DEBUG_TAG, oneChunk);
+		Log.e(DEBUG_TAG, "Sending through sms: " + oneChunk);
+
     	SmsManager.getDefault().sendTextMessage("+16506238842",
     													 null,
     													 oneChunk,
@@ -264,43 +268,14 @@ public class SmsSocket extends Socket {
 		sendSMS(encodeForSmsProtocol(buffer));
     }
 
-    public static byte[][] divideArray(byte[] source, int chunksize) {
+    public static List<String> splitEqually(String text, int size)
+    {
+        List<String> ret = new ArrayList<String>((text.length() + size - 1) / size);
 
-        byte[][] ret = new byte[(int)Math.ceil(source.length / (double)chunksize)][chunksize];
-        int start = 0;
-
-        for(int i = 0; i < ret.length; i++) {
-            if(start + chunksize > source.length) {
-            	ret[i] = new byte[source.length - start];
-                System.arraycopy(source, start, ret[i], 0, source.length - start);
-            } else {
-                System.arraycopy(source, start, ret[i], 0, chunksize);
-            }
-            start += chunksize ;
+        for (int start = 0; start < text.length(); start += size) {
+            ret.add(text.substring(start, Math.min(text.length(), start + size)));
         }
-
         return ret;
-    }
-
-    final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
-    public static String bytesToHex(byte[] bytes) {
-        char[] hexChars = new char[bytes.length * 2];
-        for ( int j = 0; j < bytes.length; j++ ) {
-            int v = bytes[j] & 0xFF;
-            hexChars[j * 2] = hexArray[v >>> 4];
-            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
-        }
-        return new String(hexChars);
-    }
-
-    public static byte[] hexStringToByteArray(String s) {
-        int len = s.length();
-        byte[] data = new byte[len / 2];
-        for (int i = 0; i < len; i += 2) {
-            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
-                                 + Character.digit(s.charAt(i+1), 16));
-        }
-        return data;
     }
 
 }
