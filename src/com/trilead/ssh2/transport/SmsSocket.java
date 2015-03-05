@@ -25,6 +25,8 @@ import android.util.Log;
 public class SmsSocket extends Socket {
 
 	static final private String DEBUG_TAG = "smssocket";
+	static final public String _twilio_num = "+14083594145";
+	//static final public String _twilio_num = "+16692227897";
 
 	SmsOutputStream _outs = new SmsOutputStream();
 	SmsInputStream _ins = new SmsInputStream();
@@ -32,7 +34,7 @@ public class SmsSocket extends Socket {
 
 	public class SmsInputStream extends InputStream {
 
-		public PipedInputStream _pipeReader = new PipedInputStream(128 * 8 * 1024);
+		public PipedInputStream _pipeReader = new PipedInputStream(128 * 10 * 1024);
 
 		public SmsInputStream() {
 		}
@@ -131,11 +133,6 @@ public class SmsSocket extends Socket {
 		public void write(byte[] buffer, int offset, int count) throws IOException
 		{
 			Log.e(DEBUG_TAG, "write 2, count " + String.valueOf(count));
-			if (count == 16) {
-				int k = 10;
-				k++;
-				//return;
-			}
 			_stream.write(buffer, offset, count);
 		}
 
@@ -240,19 +237,13 @@ public class SmsSocket extends Socket {
     	for (String val : chunks) {
     		sendSMS(val);
     	}
-
-//    	SmsManager.getDefault().sendMultipartTextMessage("+16506238842",
-//    													 null,
-//    													 chunks,
-//    													 null,
-//    													 null);
     }
 
     public static void sendSMS(String oneChunk)
     {
 		Log.e(DEBUG_TAG, "Sending through sms: " + oneChunk);
 
-    	SmsManager.getDefault().sendTextMessage("+16506238842",
+    	SmsManager.getDefault().sendTextMessage(_twilio_num,
     													 null,
     													 oneChunk,
     													 null,
@@ -262,8 +253,6 @@ public class SmsSocket extends Socket {
     private void sendDataToTwilio(String op, byte[] buffer) throws IOException
     {
     	Log.e(DEBUG_TAG, "sending buffer size: " + buffer.length);
-		//String msg = Base64.encodeToString(buffer, Base64.NO_WRAP | Base64.URL_SAFE);
-    	//Log.e(DEBUG_TAG, "sending buffer: " + bytesToHex(buffer));
 
 		sendSMS(encodeForSmsProtocol(buffer));
     }
