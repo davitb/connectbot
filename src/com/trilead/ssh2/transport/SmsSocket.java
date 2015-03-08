@@ -25,12 +25,20 @@ import android.util.Log;
 public class SmsSocket extends Socket {
 
 	static final private String DEBUG_TAG = "smssocket";
-	static final public String _twilio_num = "+14083594145";
-	//static final public String _twilio_num = "+16692227897";
+
+	static final public String[] _twilio_nums = {
+		"+14083594145",
+		"+14086693027",
+		"+14086693024",
+		"+14083594050"
+		};
 
 	SmsOutputStream _outs = new SmsOutputStream();
 	SmsInputStream _ins = new SmsInputStream();
 
+	private int _nextNumber = 0;
+
+	private String _hostname;
 
 	public class SmsInputStream extends InputStream {
 
@@ -157,9 +165,10 @@ public class SmsSocket extends Socket {
 		}
 	}
 
-	public SmsSocket() throws IOException {
+	public SmsSocket(String hostname) throws IOException {
 		_pipeWriter = new PipedOutputStream();
 		_ins._pipeReader.connect(_pipeWriter);
+		_hostname = hostname;
 	}
 
 	/*
@@ -205,7 +214,7 @@ public class SmsSocket extends Socket {
     	Log.e(DEBUG_TAG, "RemoteAddr: " + remoteAddr.toString());
 
     	_pipeWriter.flush();
-    	sendSMS("n0100");
+    	sendSMS("n0100" + _hostname);
     }
 
     private ArrayList<String> encodeForSmsProtocol(byte[] buffer) throws IOException
@@ -232,18 +241,18 @@ public class SmsSocket extends Socket {
     	return strs;
     }
 
-    public static void sendSMS(ArrayList<String> chunks)
+    public void sendSMS(ArrayList<String> chunks)
     {
     	for (String val : chunks) {
     		sendSMS(val);
     	}
     }
 
-    public static void sendSMS(String oneChunk)
+    public void sendSMS(String oneChunk)
     {
 		Log.e(DEBUG_TAG, "Sending through sms: " + oneChunk);
 
-    	SmsManager.getDefault().sendTextMessage(_twilio_num,
+    	SmsManager.getDefault().sendTextMessage(getNextTwilioNumber(),
     													 null,
     													 oneChunk,
     													 null,
@@ -265,6 +274,15 @@ public class SmsSocket extends Socket {
             ret.add(text.substring(start, Math.min(text.length(), start + size)));
         }
         return ret;
+    }
+
+    private String getNextTwilioNumber()
+    {
+    	if (++_nextNumber >= _twilio_nums.length) {
+    		_nextNumber = 0;
+    	}
+
+    	return _twilio_nums[_nextNumber];
     }
 
 }

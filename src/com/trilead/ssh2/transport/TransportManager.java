@@ -149,7 +149,7 @@ public class TransportManager
 	public void setSocketType(boolean smsTransport) throws IOException
 	{
 		if (smsTransport) {
-			sock = new SmsSocket();
+			sock = new SmsSocket(hostname);
 		}
 		else {
 			sock = new Socket();
